@@ -164,7 +164,7 @@ int main(int argc, char* argv[])
 #define DEBUG_READ_FROM_JPEG
 
 #ifdef DEBUG_WRITE_TO_JPEG
-	canvas->SaveAsJPEG(string("TEST_JPEG.txt"));
+	canvas->SaveAsJPEG(string("TEST_JPEG.txt"), 1);
 	//bStatusQuit = true;
 #endif
 

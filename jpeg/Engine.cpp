@@ -165,7 +165,7 @@ void Canvas::SetAllPixels(
 	}
 }
 
-bool Canvas::SaveAsJPEG(const string& filename, double quality)
+bool Canvas::SaveAsJPEG(const string& filename, float quality)
 {
 	fstream fs(filename, ios::out);
 	if (!fs) throw std::exception("File missing");

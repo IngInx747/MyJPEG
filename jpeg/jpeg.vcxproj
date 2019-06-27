@@ -29,6 +29,9 @@
     <ClInclude Include="Engine.h" />
     <ClInclude Include="jpeg.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{fd92e154-67a2-4175-96e7-2333d3133589}</ProjectGuid>

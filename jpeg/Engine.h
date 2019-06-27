@@ -38,7 +38,7 @@ public:
 		const std::vector<std::vector<float>>&,
 		const int channel);
 
-	bool SaveAsJPEG(const std::string& filename, double quality = 1.0);
+	bool SaveAsJPEG(const std::string& filename, float quality = 1.f);
 	bool ReadAsJPEG(const std::string& filename);
 
 private:

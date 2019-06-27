@@ -186,7 +186,7 @@ void Quantize(vector<float>& block, size_t block_id, size_t channel, float quali
 	size_t offset = block_id * 256 + channel * 64;
 
 	for (size_t e = 0; e < 64; ++e)
-		block[offset + e] = std::round(block[offset + e] / quant_mat8x8_jpeg2000[e] / quality);
+		block[offset + e] = std::round(block[offset + e] / quant_mat8x8_jpeg2000[e] * quality);
 }
 
 
@@ -197,7 +197,7 @@ void Dequantize(vector<float>& block, size_t block_id, size_t channel, float qua
 	size_t offset = block_id * 256 + channel * 64;
 
 	for (size_t e = 0; e < 64; ++e)
-		block[offset + e] *= quant_mat8x8_jpeg2000[e] * quality;
+		block[offset + e] *= quant_mat8x8_jpeg2000[e] / quality;
 }
 
 
@@ -1020,8 +1020,8 @@ int scan_code(BitStream* in, bool AC, string& datacode)
 	// Push forward
 	code.append(in->Pop());
 
-	// the longest base code is of 16 bits
-	if (code.size() > 16)
+	// the longest base code is of 26 bits (JPEG 2000)
+	if (code.size() > 26)
 		throw std::exception("Invalid code format");
 
 	// get basecode and datacode, push code forward meanwhile
