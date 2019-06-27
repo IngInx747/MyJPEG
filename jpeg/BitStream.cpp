@@ -4,11 +4,15 @@
 
 using namespace std;
 
-/**
+
 BitStream::BitStream()
 {}
 
 
+BitStream::~BitStream()
+{}
+
+/**
 size_t BitStream::size()
 {
 	return size_t();
@@ -37,6 +41,10 @@ void BitStream::Read(std::istream & in)
 
 
 StringBitStream::StringBitStream()
+{}
+
+
+StringBitStream::~StringBitStream()
 {}
 
 
@@ -83,6 +91,10 @@ void StringBitStream::Read(std::istream& in)
 
 
 BinaryBitStream::BinaryBitStream()
+{}
+
+
+BinaryBitStream::~BinaryBitStream()
 {}
 
 

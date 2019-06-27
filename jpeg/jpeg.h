@@ -15,6 +15,8 @@ namespace jpeg
 {
 namespace util // 
 {
+void RGB2YCC(std::vector<float>& block, size_t block_id);
+void YCC2RGB(std::vector<float>& block, size_t block_id);
 void UnionChannels(std::vector<float>& block, size_t block_id);
 void ScatterChannels(std::vector<float>& block, size_t block_id);
 

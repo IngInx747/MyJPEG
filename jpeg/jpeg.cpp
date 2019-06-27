@@ -17,8 +17,8 @@ using std::vector;
 using std::string;
 using std::cos;
 
-constexpr double pi() { return  3.14159265358979323846; }
-constexpr double sqrt1_2() { return 0.707106781186547524401; }
+constexpr float pi() { return  3.14159265358979323846; }
+constexpr float sqrt1_2() { return 0.707106781186547524401; }
 
 
 // Discrete Cosine Transform Coefficiencies
@@ -43,6 +43,9 @@ void ForwardTransform8x8(vector<float>& block, size_t block_id, size_t channel)
 	size_t offset = block_id * 256 + channel * 64;
 	auto iter = block.begin() + offset;
 	vector<float> copy(iter, iter + 64), temp(64, 0.f);
+
+	for (size_t e = 0; e < 64; ++e)
+		copy[e] -= 128.f;
 
 	for (size_t i = 0; i < 8; ++i)
 		for (size_t j = 0; j < 8; ++j)
@@ -84,7 +87,7 @@ void InverseTransform8x8(vector<float>& block, size_t block_id, size_t channel)
 				copy[i * 8 + j] += temp[i * 8 + k] * dct_mat8x8[k * 8 + j];
 
 	for (size_t e = 0; e < 64; ++e)
-		block[offset + e] = copy[e];
+		block[offset + e] = copy[e] + 128.f;
 }
 }
 }
@@ -128,6 +131,52 @@ const vector<int> zigzag_mat8x8{
 	55,62,
 	63,
 };
+
+const vector<float> rgb2ycc_mat{
+	0.299f, 0.587f, 0.114f,
+	-0.168736f, -0.331264f, 0.5f,
+	0.5f, -0.418688f, -0.081312f,
+};
+
+const vector<float> ycc2rgb_mat{
+	1.f, 0.f, 1.402f,
+	1.f, -0.344136f, -0.714136f,
+	1.f, 1.772f, 0.f,
+};
+
+
+//
+//
+void RGB2YCC(vector<float>& block, size_t block_id)
+{
+	size_t offset = block_id * 256;
+	auto iter = block.begin() + offset;
+	vector<float> copy(iter, iter + 256);
+
+	for (size_t e = 0; e < 256; e += 4)
+	{
+		block[offset + e + 0] = 0.f + 0.299f * copy[e + 0] + 0.587f * copy[e + 1] + 0.114f * copy[e + 2];
+		block[offset + e + 1] = 128.f - 0.168736f*copy[e + 0] - 0.331264f*copy[e + 1] + 0.5f*copy[e + 2];
+		block[offset + e + 2] = 128.f + 0.5f*copy[e + 0] - 0.418688f*copy[e + 1] - 0.081312f*copy[e + 2];
+	}
+}
+
+
+//
+//
+void YCC2RGB(vector<float>& block, size_t block_id)
+{
+	size_t offset = block_id * 256;
+	auto iter = block.begin() + offset;
+	vector<float> copy(iter, iter + 256);
+
+	for (size_t e = 0; e < 256; e += 4)
+	{
+		block[offset + e + 0] = copy[e + 0] + 1.402f * (copy[e + 2] - 128.f);
+		block[offset + e + 1] = copy[e + 0] - 0.344136f * (copy[e + 1] - 128.f) - 0.714136f * (copy[e + 2] - 128.f);
+		block[offset + e + 2] = copy[e + 0] + 1.772f * (copy[e + 1] - 128.f);
+	}
+}
 
 
 //

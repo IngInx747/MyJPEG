@@ -15,7 +15,8 @@ using Bit = std::bitset<0x10>;
 class BitStream
 {
 public:
-	BitStream() {}
+	BitStream();
+	virtual ~BitStream();
 
 	virtual size_t size() = 0;
 
@@ -50,6 +51,7 @@ class StringBitStream : public BitStream
 {
 public:
 	StringBitStream();
+	virtual ~StringBitStream();
 
 	virtual size_t size();
 
@@ -69,6 +71,7 @@ class BinaryBitStream : public BitStream
 {
 public:
 	BinaryBitStream();
+	virtual ~BinaryBitStream();
 
 	virtual size_t size();
 

@@ -19,9 +19,9 @@ using namespace std;
 void DisplayModuleWallTime(const string& info)
 {
 #ifdef DEBUG
-	static float last = omp_get_wtime();
-	float curr = omp_get_wtime();
-	printf("%s: %f\n", info.c_str(), curr - last);
+	static double last = omp_get_wtime();
+	double curr = omp_get_wtime();
+	printf("%s: %lf\n", info.c_str(), curr - last);
 	last = curr;
 #endif // DEBUG
 }
@@ -62,6 +62,7 @@ void Canvas::Free()
 	if (m_stream)
 	{
 		delete m_stream;
+		m_stream = nullptr;
 	}
 }
 
@@ -211,7 +212,9 @@ void Canvas::writeCodeJPEG(float quality)
 	DisplayModuleWallTime("Dividing image into blocks");
 
 	// RGBA to YCrCb
-	// TODO
+	for (size_t i = 0; i < nbh; ++i)
+		for (size_t j = 0; j < nbw; ++j)
+			jpeg::util::RGB2YCC(blocks, i*nbw + j);
 
 	// Union same channel in buffer
 	for (size_t i = 0; i < nbh; ++i)
@@ -264,7 +267,7 @@ bool Canvas::ReadAsJPEG(const std::string& filename)
 		throw std::exception("Incomplete code");
 
 	int w, h;
-	double quality;
+	float quality;
 	stringstream ss(config);
 
 	ss >> w >> h >> quality;
@@ -339,14 +342,20 @@ void Canvas::readCodeJPEG(float quality)
 	DisplayModuleWallTime("Scatter channels");
 
 	// YCrCb to RGBA
-	// TODO
+	for (size_t i = 0; i < nbh; ++i)
+		for (size_t j = 0; j < nbw; ++j)
+			jpeg::util::YCC2RGB(blocks, i*nbw + j);
 
 	// write 8x8 blocks back to pixels
 	for (size_t i = 0; i < nbh; ++i)
 		for (size_t j = 0; j < nbw; ++j)
 			for (size_t l = 0; l < 8; ++l)
 				for (size_t e = 0; e < 32; ++e)
-					m_Pixels[((i * 8 + l) *w + j * 8) * 4 + e] = blocks[(i *nbw + j) * 256 + l * 32 + e];
+				{
+					float fcolor = blocks[(i *nbw + j) * 256 + l * 32 + e];
+					unsigned char color = fcolor > 255.f ? 255 : fcolor < 0.f ? 0 : (unsigned char)fcolor;
+					m_Pixels[((i * 8 + l) *w + j * 8) * 4 + e] = color;
+				}
 
 	DisplayModuleWallTime("Writing blocks back to image");
 }
