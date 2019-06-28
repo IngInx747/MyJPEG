@@ -19,6 +19,7 @@ public:
 	virtual ~BitStream();
 
 	virtual size_t size() = 0;
+	virtual bool empty() = 0;
 
 	////////////////////////////////////////
 	// Encode data to bits container
@@ -37,7 +38,7 @@ public:
 
 	// Pop data from container
 	// How bits are interpreted and trimmed is defined here
-	virtual std::string Pop() = 0;
+	virtual int Pop() = 0;
 	// Read stream
 	// How bits are read from stream is defined here
 	virtual void Read(std::istream& in) = 0;
@@ -54,11 +55,12 @@ public:
 	virtual ~StringBitStream();
 
 	virtual size_t size();
+	virtual bool empty();
 
 	virtual void Add(const std::string& bits);
 	virtual void Write(std::ostream& out);
 
-	virtual std::string Pop();
+	virtual int Pop();
 	virtual void Read(std::istream& in);
 
 private:
@@ -74,11 +76,12 @@ public:
 	virtual ~BinaryBitStream();
 
 	virtual size_t size();
+	virtual bool empty();
 
 	virtual void Add(const std::string& bits);
 	virtual void Write(std::ostream& out);
 
-	virtual std::string Pop();
+	virtual int Pop();
 	virtual void Read(std::istream& in);
 
 private:

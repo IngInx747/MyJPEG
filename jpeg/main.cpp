@@ -145,6 +145,10 @@ int main(int argc, char* argv[])
 
 
 
+#define DEBUG_WRITE_TO_JPEG
+#define DEBUG_READ_FROM_JPEG
+
+#ifdef DEBUG_WRITE_TO_JPEG
 	const int w = canvas->width(), h = canvas->height();
 	float cx = w / 2, cy = h / 2;
 	float am = 256.f * cx, sigma = w / 2.f;
@@ -158,13 +162,7 @@ int main(int argc, char* argv[])
 		{ {am, sigma, cx, 0}, {am, sigma, 0, cy}, {am, sigma, cx, cy}, {}, },
 		0b1110);
 
-
-
-#define DEBUG_WRITE_TO_JPEG
-#define DEBUG_READ_FROM_JPEG
-
-#ifdef DEBUG_WRITE_TO_JPEG
-	canvas->SaveAsJPEG(string("TEST_JPEG.txt"), 1);
+	canvas->SaveAsJPEG(string("TEST_JPEG.txt"), 0.5);
 	//bStatusQuit = true;
 #endif
 

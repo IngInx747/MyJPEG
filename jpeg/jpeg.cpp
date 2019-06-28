@@ -666,7 +666,7 @@ const vector<AC_t> AC_Table{
 	{0xF,   0x9,    25,    "1111111111111101"		,},
 	{0xF,   0xA,    26,    "1111111111111110"		,},
 	//10
-	{0x10,  0x1,    12,    "111111110111"			,},
+	{0x10,  0x0,    12,    "111111110111"			,},
 };
 
 const unordered_map<string, int> AC_BaseCode{
@@ -1013,25 +1013,20 @@ int code2data(const string& datacode, int category)
 // out: datacode of LSBs expression
 int scan_code(BitStream* in, bool AC, string& datacode)
 {
-	int id{ -1 }, len{ };
-	string code, basecode{};
+	int id{ -1 }, len{ }, bit{};
+	string basecode{};
 	const unordered_map<string, int>& CodeDict = AC ? AC_BaseCode : DC_BaseCode;
 
-	// Push forward
-	code.append(in->Pop());
+	datacode.clear();
 
-	// the longest base code is of 26 bits (JPEG 2000)
-	if (code.size() > 26)
-		throw std::exception("Invalid code format");
-
-	// get basecode and datacode, push code forward meanwhile
-	for (auto it = code.begin(); it != code.end(); ++it)
+	while (!in->empty())
 	{
-		// ignore any bit that is not 0 or 1
-		if ((*it) != '0' && (*it) != '1')
-			continue;
+		bit = in->Pop();
 
-		basecode.push_back(*it);
+		if (bit == -1)
+			throw std::exception("Invalid code format");
+
+		basecode.push_back('0' + bit);
 		auto jt = CodeDict.find(basecode);
 
 		// code buffer matches one of basecodes
@@ -1045,7 +1040,17 @@ int scan_code(BitStream* in, bool AC, string& datacode)
 				len = DC_Table[id].category;
 
 			// read corresponding datacode
-			datacode.assign(it + 1, it + 1 + len);
+			for (size_t i = 0; i < len; ++i)
+			{
+				bit = in->Pop();
+
+				if (bit == -1)
+					throw std::exception("Invalid code format");
+
+				datacode.push_back('0' + bit);
+			}
+
+			break;
 		}
 	}
 

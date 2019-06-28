@@ -54,10 +54,16 @@ size_t StringBitStream::size()
 }
 
 
+bool StringBitStream::empty()
+{
+	return m_bits.empty();
+}
+
+
 void StringBitStream::Add(const std::string& bits)
 {
 	m_bits.append(bits);
-	m_bits.append(" ");
+	//m_bits.append(" ");
 }
 
 
@@ -67,16 +73,18 @@ void StringBitStream::Write(std::ostream& out)
 }
 
 
-std::string StringBitStream::Pop()
+int StringBitStream::Pop()
 {
-	size_t start_0 = m_bits.find_first_of('0');
-	size_t start_1 = m_bits.find_first_of('1');
-	size_t start = start_0 < start_1 ? start_0 : start_1;
-	if (start == string::npos) return "";
-	size_t end = m_bits.find_first_of(' ', start);
-	string buffer(m_bits.begin() + start, m_bits.begin() + end);
-	m_bits.erase(m_bits.begin(), m_bits.begin() + end);
-	return buffer;
+	while (!empty() && m_bits[0] != '0' && m_bits[0] != '1')
+		m_bits.erase(m_bits.begin());
+
+	if (empty())
+		return -1;
+
+	int bit = m_bits[0] - '0';
+	m_bits.erase(m_bits.begin());
+
+	return bit;
 }
 
 
@@ -104,6 +112,12 @@ size_t BinaryBitStream::size()
 }
 
 
+bool BinaryBitStream::empty()
+{
+	return false;
+}
+
+
 void BinaryBitStream::Add(const std::string& bits)
 {}
 
@@ -112,9 +126,9 @@ void BinaryBitStream::Write(std::ostream & out)
 {}
 
 
-std::string BinaryBitStream::Pop()
+int BinaryBitStream::Pop()
 {
-	return std::string();
+	return -1;
 }
 
 
