@@ -193,28 +193,75 @@ void Canvas::writeCodeJPEG(float quality)
 {
 	const int w = m_width;
 	const int h = m_height;
-	const int n = w * h;
-	const int nbw = w / 8;
-	const int nbh = h / 8;
-	const int nb = nbw * nbh;
+
+	const int nbw = w % 8 == 0 ? w / 8 : w / 8 + 1;
+	const int nbh = h % 8 == 0 ? h / 8 : h / 8 + 1;
+
 	vector<float> blocks(nbw * nbh * 256, 0.f);
 	vector<int> prev_dc_coef(4, 0);
 
 	DisplayModuleWallTime("");
 
 	// divide pixels into 8x8 blocks
-	for (size_t i = 0; i < nbh; ++i)
-		for (size_t j = 0; j < nbw; ++j)
-			for (size_t l = 0; l < 8; ++l)
-				for (size_t e = 0; e < 32; ++e)
-					blocks[(i *nbw + j) * 256 + l * 32 + e] = m_Pixels[((i * 8 + l) *w + j * 8) * 4 + e];
+	// original image => continuous [64 pixels] (256 bytes for 4 channels) in memory
+
+	//for (size_t i = 0; i < nbh; ++i)
+	//	for (size_t j = 0; j < nbw; ++j)
+	//		for (size_t l = 0; l < 8; ++l)
+	//			for (size_t e = 0; e < 32; ++e)
+	//				blocks[(i *nbw + j) * 256 + l * 32 + e] = m_Pixels[((i * 8 + l) *w + j * 8) * 4 + e];
+
+	for (size_t i = 0; i < h; ++i)
+	{
+		for (size_t j = 0; j < w; ++j)
+		{
+			const size_t bi = i / 8, bj = j / 8;
+			const size_t ii = i - 8 * bi, jj = j - 8 * bj;
+			for (size_t c = 0; c < 4; ++c)
+				blocks[((bi * nbw + bj) * 64 + (ii * 8 + jj)) * 4 + c] = m_Pixels[(i*w + j) * 4 + c];
+		}
+	}
+
+	// edge compensation
+
+	for (size_t i = 0; i < h; ++i)
+	{
+		for (size_t j = w; j < nbw * 8; ++j)
+		{
+			const size_t bi = i / 8, bj = j / 8;
+			const size_t ii = i - 8 * bi, jj = j - 8 * bj;
+
+			// how to deal with edge filling
+			const size_t ej = w - 1;
+
+			for (size_t c = 0; c < 4; ++c)
+				blocks[((bi * nbw + bj) * 64 + (ii * 8 + jj)) * 4 + c] = m_Pixels[(i*w + ej) * 4 + c];
+		}
+	}
+
+	for (size_t i = h; i < nbh * 8; ++i)
+	{
+		for (size_t j = 0; j < nbw * 8; ++j)
+		{
+			const size_t bi = i / 8, bj = j / 8;
+			const size_t ii = i - 8 * bi, jj = j - 8 * bj;
+
+			// how to deal with edge filling
+			const size_t ei = h - 1;
+
+			for (size_t c = 0; c < 4; ++c)
+				blocks[((bi * nbw + bj) * 64 + (ii * 8 + jj)) * 4 + c] = m_Pixels[(ei*w + j) * 4 + c];
+		}
+	}
 
 	DisplayModuleWallTime("Dividing image into blocks");
 
-	// RGBA to YCrCb
+	// RGB to YCrCb
 	for (size_t i = 0; i < nbh; ++i)
 		for (size_t j = 0; j < nbw; ++j)
 			jpeg::util::RGB2YCC(blocks, i*nbw + j);
+
+	DisplayModuleWallTime("RGB to YCC");
 
 	// Union same channel in buffer
 	for (size_t i = 0; i < nbh; ++i)
@@ -222,6 +269,19 @@ void Canvas::writeCodeJPEG(float quality)
 			jpeg::util::UnionChannels(blocks, i * nbw + j);
 
 	DisplayModuleWallTime("Unioning channels");
+
+	// Block Format: [ <== 256 bytes ==> ]
+	// [C0 x64] [C1 x64] [C2 x64] [C3 x64]
+
+	// Down sampling (no significant effect on compress ratio)
+	for (size_t i = 0; i < nbh; ++i)
+		for (size_t j = 0; j < nbw; ++j)
+		{
+			jpeg::util::DownSampling420(blocks, i * nbw + j, 1);
+			jpeg::util::DownSampling420(blocks, i * nbw + j, 2);
+		}
+
+	DisplayModuleWallTime("Down sampling 4:2:0");
 
 	// DCT
 	for (size_t i = 0; i < nbh; ++i)
@@ -293,10 +353,10 @@ void Canvas::readCodeJPEG(float quality)
 {
 	const int w = m_width;
 	const int h = m_height;
-	const int n = w * h;
-	const int nbw = w / 8;
-	const int nbh = h / 8;
-	const int nb = nbw * nbh;
+
+	const int nbw = w % 8 == 0 ? w / 8 : w / 8 + 1;
+	const int nbh = h % 8 == 0 ? h / 8 : h / 8 + 1;
+
 	vector<float> blocks(nbw * nbh * 256, 0.f);
 	vector<int> prev_dc_coef(4, 0);
 
@@ -334,6 +394,9 @@ void Canvas::readCodeJPEG(float quality)
 
 	DisplayModuleWallTime("INV DCT");
 
+	// Block Format: [ <== 256 bytes ==> ]
+	// [C0 x64] [C1 x64] [C2 x64] [C3 x64]
+
 	// union same channel in buffer
 	for (size_t i = 0; i < nbh; ++i)
 		for (size_t j = 0; j < nbw; ++j)
@@ -346,16 +409,34 @@ void Canvas::readCodeJPEG(float quality)
 		for (size_t j = 0; j < nbw; ++j)
 			jpeg::util::YCC2RGB(blocks, i*nbw + j);
 
+	DisplayModuleWallTime("RGB to YCC");
+
 	// write 8x8 blocks back to pixels
-	for (size_t i = 0; i < nbh; ++i)
-		for (size_t j = 0; j < nbw; ++j)
-			for (size_t l = 0; l < 8; ++l)
-				for (size_t e = 0; e < 32; ++e)
-				{
-					float fcolor = blocks[(i *nbw + j) * 256 + l * 32 + e];
-					unsigned char color = fcolor > 255.f ? 255 : fcolor < 0.f ? 0 : (unsigned char)fcolor;
-					m_Pixels[((i * 8 + l) *w + j * 8) * 4 + e] = color;
-				}
+
+	//for (size_t i = 0; i < nbh; ++i)
+	//	for (size_t j = 0; j < nbw; ++j)
+	//		for (size_t l = 0; l < 8; ++l)
+	//			for (size_t e = 0; e < 32; ++e)
+	//			{
+	//				float fcolor = blocks[(i *nbw + j) * 256 + l * 32 + e];
+	//				unsigned char color = fcolor > 255.f ? 255 : fcolor < 0.f ? 0 : (unsigned char)fcolor;
+	//				m_Pixels[((i * 8 + l) *w + j * 8) * 4 + e] = color;
+	//			}
+
+	for (size_t i = 0; i < h; ++i)
+	{
+		for (size_t j = 0; j < w; ++j)
+		{
+			const size_t bi = i / 8, bj = j / 8;
+			const size_t ii = i - 8 * bi, jj = j - 8 * bj;
+			for (size_t c = 0; c < 4; ++c)
+			{
+				float fcolor = blocks[((bi * nbw + bj) * 64 + (ii * 8 + jj)) * 4 + c];
+				unsigned char color = fcolor > 255.f ? 255 : fcolor < 0.f ? 0 : (unsigned char)fcolor;
+				m_Pixels[(i*w + j) * 4 + c] = color;
+			}
+		}
+	}
 
 	DisplayModuleWallTime("Writing blocks back to image");
 }

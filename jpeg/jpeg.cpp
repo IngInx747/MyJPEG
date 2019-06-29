@@ -181,6 +181,39 @@ void YCC2RGB(vector<float>& block, size_t block_id)
 
 //
 //
+void DownSampling422(vector<float>& block, size_t block_id, size_t channel)
+{
+	size_t offset = block_id * 256 + channel * 64;
+	
+	for (size_t e = 0; e < 64; e += 2)
+	{
+		float avg = (block[offset + e] + block[offset + e + 1]) * .5f;
+		block[offset + e] = block[offset + e + 1] = avg;
+	}
+}
+
+
+//
+//
+void DownSampling420(vector<float>& block, size_t block_id, size_t channel)
+{
+	size_t offset = block_id * 256 + channel * 64;
+
+	for (size_t i = 0; i < 8; i += 2)
+	{
+		for (size_t j = 0; j < 8; j += 2)
+		{
+			float avg = block[offset + i * 8 + j] + block[offset + i * 8 + j + 1]
+				+ block[offset + (i + 1) * 8 + j] + block[offset + (i + 1) * 8 + j + 1];
+			block[offset + i * 8 + j] = block[offset + i * 8 + j + 1]
+				= block[offset + (i + 1) * 8 + j] = block[offset + (i + 1) * 8 + j + 1] = avg * .25f;
+		}
+	}
+}
+
+
+//
+//
 void Quantize(vector<float>& block, size_t block_id, size_t channel, float quality)
 {
 	size_t offset = block_id * 256 + channel * 64;

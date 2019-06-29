@@ -16,8 +16,8 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
 // Pixels dimension
-const int NUM_PIXEL_X = 512;
-const int NUM_PIXEL_Y = 512;
+const int NUM_PIXEL_X = 802;
+const int NUM_PIXEL_Y = 602;
 
 // include the Direct3D Library file
 #pragma comment (lib, "SDL2.lib")
@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
 		{ {am, sigma, cx, 0}, {am, sigma, 0, cy}, {am, sigma, cx, cy}, {}, },
 		0b1110);
 
-	canvas->SaveAsJPEG(string("TEST_JPEG.txt"), 0.5);
+	canvas->SaveAsJPEG(string("TEST_JPEG.txt"), 5);
 	//bStatusQuit = true;
 #endif
 
@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
 				switch (e.key.keysym.sym)
 				{
 				case SDLK_s:
-					canvas->SaveAsJPEG(string("TEST_JPEG.txt"));
+					canvas->SaveAsJPEG(string("TEST_JPEG.txt"), 5);
 					break;
 				case SDLK_ESCAPE:
 					bStatusQuit = true;

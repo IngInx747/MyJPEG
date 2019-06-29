@@ -20,6 +20,9 @@ void YCC2RGB(std::vector<float>& block, size_t block_id);
 void UnionChannels(std::vector<float>& block, size_t block_id);
 void ScatterChannels(std::vector<float>& block, size_t block_id);
 
+void DownSampling422(std::vector<float>& block, size_t block_id, size_t channel);
+void DownSampling420(std::vector<float>& block, size_t block_id, size_t channel);
+
 void Quantize(std::vector<float>& block, size_t block_id, size_t channel, float quality);
 void Dequantize(std::vector<float>& block, size_t block_id, size_t channel, float quality);
 
